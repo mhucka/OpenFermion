@@ -56,3 +56,13 @@ jobs:
         with:
           ghtoken: ${{secrets.GHRS_GITHUB_API_TOKEN}}
           databranch: ${{env.databranch}}
+
+      - name: Print a note in the job summary pointing to the statistics
+        run: |
+          base="https://github.com/${{github.repository}}"
+          url="$base/tree/${{env.databranch}}/${{github.repository}}"
+          {
+          echo "### Location of saved repository statistics and reports"
+          echo "Workflow results are saved in branch ${{env.databranch}}."
+          echo "Visit the [README file]($url)for links to the reports."
+          } >> "$GITHUB_STEP_SUMMARY"
