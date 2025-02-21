@@ -5,7 +5,7 @@
 # durations than GitHub's 14-day limit.
 
 name: GitHub repo statistics preservation
-run-name: Save daily GitHub repo statistics for ${{github.repository}}
+run-name: Save daily GitHub statistics for ${{github.repository}}
 
 on:
   schedule:
@@ -61,8 +61,9 @@ jobs:
         run: |
           base="https://github.com/${{github.repository}}"
           url="$base/tree/${{env.databranch}}/${{github.repository}}"
+          # shellcheck disable=SC2006
           {
           echo "### Location of saved repository statistics and reports"
-          echo "Workflow results are saved in branch ${{env.databranch}}."
-          echo "Visit the [README file]($url)for links to the reports."
+          echo "Workflow results are saved in branch `${{env.databranch}}`."
+          echo "Visit the [README file]($url) there for links to the reports."
           } >> "$GITHUB_STEP_SUMMARY"
