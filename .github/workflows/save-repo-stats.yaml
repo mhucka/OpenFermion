@@ -64,6 +64,6 @@ jobs:
           # shellcheck disable=SC2006
           {
           echo "### Location of saved repository statistics and reports"
-          echo "Workflow results are saved in branch `${{env.databranch}}`."
+          echo "Data is saved in branch <code>${{env.databranch}}</code>."
           echo "Visit the [README file]($url) there for links to the reports."
           } >> "$GITHUB_STEP_SUMMARY"
