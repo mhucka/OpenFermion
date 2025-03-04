@@ -16,9 +16,9 @@ jobs:
       home: ${{github.server_url}}/${{github.repository}}
     steps:
       - run: |
-          echo ${{env.issue-message}}
+          echo "${{env.issue-message}}"
           echo ======================
-          echo ${{env.pr-message}}
+          echo "${{env.pr-message}}"
         env:
           issue-message: |
             Hello ${{github.actor}} 👋!
