@@ -1,4 +1,7 @@
-# Summary: OpenFermion continuous integration status checks.
+# Summary: add a welcoming comment to first-time contributors' issues & PRs.
+# This is written in a generic way so that we can use the same workflow
+# in all our quantumlib repos.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 name: Welcome first interactions
 run-name: Welcome ${{github.actor}}'s first interaction
