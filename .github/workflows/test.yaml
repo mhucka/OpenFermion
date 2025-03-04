@@ -3,6 +3,7 @@
 name: Test
 
 on:
+  push:
   workflow_dispatch:
 
 # Declare default permissions as read-only.
@@ -13,7 +14,8 @@ jobs:
     name: test
     runs-on: ubuntu-24.04
     env:
-      home: ${{github.server_url}}/${{github.repository}}
+      repo: ${{github.server_url}}/${{github.repository}}
+      files: ${{github.server_url}}/${{github.repository}}/blob/${{github.ref_name}}
     steps:
       - run: |
           echo "${{env.issue-message}}"
@@ -26,12 +28,12 @@ jobs:
             Thanks for filing your first issue with the ${{github.repository}}
             project! We are glad you are here and are excited to see your first
             contribution. Please keep in mind our [community participation
-            guidelines](${{env.home}}/${{github.ref_name}}/CODE_OF_CONDUCT.md).
+            guidelines](${{env.files}}/CODE_OF_CONDUCT.md).
 
             If this is a bug report, we will probably need the following
-            details in order to diagnose the issue. If you can provide this
-            information up-front, it will probably save everyone time in the
-            long run:
+            details in order to diagnose the issue. If you did not include it
+            in the original issue description, please consider providing it
+            now because it will probably save everyone time in the long run:
 
             - [ ] Environment you are using (MacOS, Windows, Colab, etc.)
             - [ ] Version of Python you are using
@@ -39,8 +41,12 @@ jobs:
 
             Please allow time for the project community to be able to read the
             issue and comment or act on it. In the meantime, you may want to
-            look through the [existing open issues](${{env.home}}/issues) to
-            see if any are look similar to yours.
+            look through the [existing open issues](${{env.repo}}/issues) to
+            see if any look similar to yours. If you find a similar or
+            identical issue, consider closing this one; if you don't want to
+            close this one, it would be helpful if you could write a comment
+            here that references the related issue and explains how this new
+            one differs from the other one.
 
             This is an automatically-generated message.
           pr-message: |
@@ -49,18 +55,17 @@ jobs:
             Thanks for making your first pull request to the
             ${{github.repository}} project! We are glad you are here and are
             excited to see your first contribution. Please keep in mind our
-            [community code of
-            conduct](${{env.home}}/${{github.ref_name}}/CODE_OF_CONDUCT.md).
+            [community code of conduct](${{env.files}}/CODE_OF_CONDUCT.md).
 
             Since this is your first pull request with this project, the
             automated check for the Google [Contributor License
             Agreement](https://cla.developers.google.com/about) (CLA) will
             trigger and may request that you to sign the CLA. More information
             about the agreement can be found in the project's [contributing
-            guide](${{env.home}}/${{github.ref_name}}/CONTRIBUTING.md).
+            guide](${{env.files}}/CONTRIBUTING.md).
 
             If this pull request is to fix a bug, please reference the relevant
-            issue number in the project [issue tracker](${{env.home}}/issues).
+            issue number in the project [issue tracker](${{env.repo}}/issues).
 
             Please allow time for the project community to be able to read and
             evaluate your pull request.
