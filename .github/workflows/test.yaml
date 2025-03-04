@@ -1,0 +1,68 @@
+# Summary: OpenFermion continuous integration status checks.
+
+name: Test
+
+on:
+  workflow_dispatch:
+
+# Declare default permissions as read-only.
+permissions: read-all
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-24.04
+    env:
+      home: ${{github.server_url}}/${{github.repository}}
+    steps:
+      - run: |
+          echo ${{env.issue-message}}
+          echo ======================
+          echo ${{env.pr-message}}
+        env:
+          issue-message: |
+            Hello ${{github.actor}} 👋!
+
+            Thanks for filing your first issue with the ${{github.repository}}
+            project! We are glad you are here and are excited to see your first
+            contribution. Please keep in mind our [community participation
+            guidelines](${{env.home}}/${{github.ref_name}}/CODE_OF_CONDUCT.md).
+
+            If this is a bug report, we will probably need the following
+            details in order to diagnose the issue. If you can provide this
+            information up-front, it will probably save everyone time in the
+            long run:
+
+            - [ ] Environment you are using (MacOS, Windows, Colab, etc.)
+            - [ ] Version of Python you are using
+            - [ ] Steps to reproduce the issue
+
+            Please allow time for the project community to be able to read the
+            issue and comment or act on it. In the meantime, you may want to
+            look through the [existing open issues](${{env.home}}/issues) to
+            see if any are look similar to yours.
+
+            This is an automatically-generated message.
+          pr-message: |
+            Hello ${{github.actor}} 👋!
+
+            Thanks for making your first pull request to the
+            ${{github.repository}} project! We are glad you are here and are
+            excited to see your first contribution. Please keep in mind our
+            [community code of
+            conduct](${{env.home}}/${{github.ref_name}}/CODE_OF_CONDUCT.md).
+
+            Since this is your first pull request with this project, the
+            automated check for the Google [Contributor License
+            Agreement](https://cla.developers.google.com/about) (CLA) will
+            trigger and may request that you to sign the CLA. More information
+            about the agreement can be found in the project's [contributing
+            guide](${{env.home}}/${{github.ref_name}}/CONTRIBUTING.md).
+
+            If this pull request is to fix a bug, please reference the relevant
+            issue number in the project [issue tracker](${{env.home}}/issues).
+
+            Please allow time for the project community to be able to read and
+            evaluate your pull request.
+
+            This is an automatically-generated message.
