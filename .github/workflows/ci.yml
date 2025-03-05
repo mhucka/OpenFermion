@@ -233,7 +233,7 @@ jobs:
       - name: Run format checks
         run: |
           set -x
-          check/format-incremental ${{env.base}}
+          check/format-incremental
 
   python-mypy:
     if: needs.changes.outputs.python == 'true'
