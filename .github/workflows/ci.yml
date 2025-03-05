@@ -228,7 +228,7 @@ jobs:
         run: pip install -r dev_tools/requirements/envs/format.env.txt
 
       - name: Run format checks
-        run: check/format-incremental
+        run: check/format-incremental ${{env.base}}
 
   python-mypy:
     if: needs.changes.outputs.python == 'true'
