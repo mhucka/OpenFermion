@@ -164,17 +164,6 @@ jobs:
               - '**/*.sh'
               - 'check/*'
 
-  debug:
-    needs: changes
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - run: |
-          set -x
-          echo "${{needs.changes.outputs.python}}"
-          echo "${{needs.changes.outputs.python_files}}"
-          echo "${{needs.changes.outputs.ci}}"
-
   setup:
     if: needs.changes.outputs.python == 'true'
     name: (Set up Python)
