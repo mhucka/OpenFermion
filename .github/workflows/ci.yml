@@ -61,6 +61,37 @@ env:
     dev_tools/requirements/max_compat/pytest-max-compat.env.txt
 
 jobs:
+  config:
+    name: (Configure workflow)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      base: ${{env.base}}
+    steps:
+      # When invoked manually, use the given SHA to figure out the change list.
+      - if: github.event_name == 'workflow_dispatch'
+        name: Use the user-provided SHA as the basis for comparisons
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: |
+          set -x +e
+          url="repos/${{github.repository}}/commits/${{inputs.sha}}"
+          if full_sha="$(gh api $url -q '.sha')"; then
+            echo "base=$full_sha" >> "$GITHUB_ENV"
+          else
+            {
+            echo "### :x: Workflow error"
+            echo "The SHA provided to _Run Workflow_ does not exist:"
+            echo "<code>${{inputs.sha}}</code>"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - if: github.event_name != 'workflow_dispatch'
+        name: Use ref ${{github.ref_name}} as the basis for comparisons
+        run: |
+          echo base=${{github.ref_name}} >> "$GITHUB_ENV"
+
   # GitHub Actions can have path filters (i.e., the use of a "paths:" keyword
   # on the trigger definitions in the "on:" block earlier in this file). Path
   # filters *would* be the natural way to make workflows trigger only when the
@@ -75,16 +106,16 @@ jobs:
   # trigger condition, and instead, do our own filtering using a combination
   # of testing specific file patterns (in the changes job below) and "if:"
   # conditions on individual jobs in the rest of this workflow.
-
   changes:
     name: (Find changed files)
+    needs: config
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       gha: ${{steps.filter.outputs.gha}}
       gha_files: ${{steps.filter.outputs.gha_files}}
 
-      # The following all test both the relevant file condition & the CI config
+      # The following all test both the relevant file condition & the workflows
       # because a change in the CI workflows can affect the CI check results.
       python: ${{steps.filter.outputs.python || steps.filter.outputs.ci}}
       python_files: ${{steps.filter.outputs.python_files}}
@@ -104,30 +135,6 @@ jobs:
       shell: ${{steps.filter.outputs.shell || steps.filter.outputs.ci}}
       shell_files: ${{steps.filter.outputs.shell_files}}
     steps:
-      # When invoked manually, use the given SHA to figure out the change list.
-      - if: github.event_name == 'workflow_dispatch'
-        name: Use the user-provided SHA as the basis for comparison
-        env:
-          GH_TOKEN: ${{github.token}}
-        run: |
-          set -x +e
-          url="repos/${{github.repository}}/commits/${{inputs.sha}}"
-          if full_sha="$(gh api $url -q '.sha')"; then
-            echo "base=$full_sha" >> "$GITHUB_ENV"
-          else
-            {
-            echo "### :x: Workflow error"
-            echo "The SHA provided to _Run Workflow_ does not exist:"
-            echo "<code>${{inputs.sha}}</code>"
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
-
-      - if: github.event_name != 'workflow_dispatch'
-        name: Use ref ${{github.ref_name}} as the basis for comparison
-        run: |
-          echo base=${{github.ref_name}} >> "$GITHUB_ENV"
-
       - name: Check out a copy of the OpenFermion git repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
@@ -166,7 +173,7 @@ jobs:
               - '**/*.sh'
               - 'check/*'
 
-  setup:
+  python-setup:
     if: needs.changes.outputs.python == 'true'
     name: (Set up Python)
     needs: changes
@@ -198,9 +205,11 @@ jobs:
   python-format:
     if: needs.changes.outputs.python == 'true'
     name: Python format checks
-    needs: [changes, setup]
+    needs: [config, changes, python-setup]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      base: ${{needs.config.outputs.base}}
     steps:
       - name: Check out a copy of the git repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -229,7 +238,7 @@ jobs:
   python-mypy:
     if: needs.changes.outputs.python == 'true'
     name: Python type checks
-    needs: [changes, setup]
+    needs: [changes, python-setup]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -256,7 +265,7 @@ jobs:
   python-lint:
     if: needs.changes.outputs.python == 'true'
     name: Python lint checks
-    needs: [changes, setup]
+    needs: [changes, python-setup]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -291,7 +300,7 @@ jobs:
   pytest-matrix:
     if: needs.changes.outputs.python == 'true'
     name: (Python pytest matrix)
-    needs: [changes, setup]
+    needs: [changes, python-setup]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -338,7 +347,7 @@ jobs:
   pytest-extra-matrix:
     if: needs.changes.outputs.python == 'true'
     name: (Python extra pytest matrix)
-    needs: [changes, setup]
+    needs: [changes, python-setup]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -385,7 +394,7 @@ jobs:
   python-compat:
     if: needs.changes.outputs.python == 'true'
     name: Python compatibility checks
-    needs: [changes, setup]
+    needs: [changes, python-setup]
     runs-on: ubuntu-20.04
     timeout-minutes: 15
     steps:
@@ -412,7 +421,7 @@ jobs:
   coverage:
     if: needs.changes.outputs.python == 'true'
     name: Python code coverage checks
-    needs: [changes, setup]
+    needs: [changes, python-setup]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
