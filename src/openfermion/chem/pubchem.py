@@ -9,6 +9,28 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import time
+from urllib.error import URLError
+
+
+def _get_from_pubchem_with_retries(retries=3, delay=1, **kwargs):
+    """Get a compound from PubChem, retrying if the server is busy.
+
+    Args:
+        retries(int): The number of times to retry.
+        delay(float): The delay between retries, in seconds.
+        **kwargs: The arguments to pass to pubchempy.get_compounds.
+    """
+    import pubchempy
+
+    for i in range(retries):
+        try:
+            return pubchempy.get_compounds(**kwargs)
+        except URLError as e:
+            if i < retries - 1:
+                time.sleep(delay)
+            else:
+                raise e
 
 
 def geometry_from_pubchem(name: str, structure: str = None):
@@ -30,17 +52,21 @@ def geometry_from_pubchem(name: str, structure: str = None):
         geometry: a list of tuples giving the coordinates of each atom with
         distances in Angstrom.
     """
-    import pubchempy
-
     if structure in ['2d', '3d']:
-        pubchempy_molecule = pubchempy.get_compounds(name, 'name', record_type=structure)
+        pubchempy_molecule = _get_from_pubchem_with_retries(
+            identifier=name, namespace='name', record_type=structure
+        )
     elif structure is None:
         # Ideally get the 3-D geometry if available.
-        pubchempy_molecule = pubchempy.get_compounds(name, 'name', record_type='3d')
+        pubchempy_molecule = _get_from_pubchem_with_retries(
+            identifier=name, namespace='name', record_type='3d'
+        )
 
         # If the 3-D geometry isn't available, get the 2-D geometry instead.
         if not pubchempy_molecule:
-            pubchempy_molecule = pubchempy.get_compounds(name, 'name', record_type='2d')
+            pubchempy_molecule = _get_from_pubchem_with_retries(
+                identifier=name, namespace='name', record_type='2d'
+            )
     else:
         raise ValueError('Incorrect value for the argument structure=%s' % structure)
 
