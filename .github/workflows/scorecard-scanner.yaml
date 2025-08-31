@@ -19,7 +19,7 @@
 # Google's GitHub team. Scorecard's findings are reported in a repo's scanning
 # results page, https://github.com/quantumlib/REPO/security/code-scanning/.
 
-name: Scorecard analysis
+name: Scorecard scanner
 run-name: Run Scorecard best-practices analyzer
 
 on:
@@ -55,7 +55,6 @@ concurrency:
 
 jobs:
   scorecard:
-    if: github.repository_owner == 'quantumlib'
     name: Run Scorecard analyzer
     runs-on: ubuntu-24.04
     permissions:
