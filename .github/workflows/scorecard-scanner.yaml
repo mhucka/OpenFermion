@@ -24,7 +24,8 @@ run-name: Run Scorecard best-practices analyzer
 
 on:
   schedule:
-    - cron: '15 4 * * *'
+    # Run weekly on Saturdays.
+    - cron:  '30 9 * * 6'
 
   pull_request:
     types: [opened, synchronize]
@@ -54,12 +55,10 @@ concurrency:
   group: ${{github.workflow}}-${{github.event.pull_request.number||github.ref}}
 
 jobs:
-  scorecard:
+  run-scorecard:
     name: Run Scorecard analyzer
     runs-on: ubuntu-24.04
     permissions:
-      actions: read
-      contents: read
       security-events: write
       id-token: write
     timeout-minutes: 15
@@ -85,21 +84,29 @@ jobs:
         with:
           sarif_file: scorecard-results.sarif
 
+      - if: github.event.inputs.debug == true
+        name: Upload results as artifacts to the workflow Summary page
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Scorecard SARIF file
+          path: scorecard-results.sarif
+          retention-days: 5
+
+  # Scorecard currently (ver. 2.4.x) does not allow submissions from jobs
+  # having steps that use "run:". Steps can only use "uses:". Thus, to
+  # print a reminder of
+  write-summary:
+    name: Write Scorecard job summary
+    needs: run-scorecard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
       - name: Write the Scorecard dashboard link to the workflow summary
         run: |
           repo="${{github.event.repository.name}}"
-          repo="${repo//\//%2F}"
-          url="https://scorecard.dev/viewer/?uri=github.com%2F$repo"
+          url="https://scorecard.dev/viewer/?uri=github.com%2F${repo//\//%2F}"
           {
           echo "## Scorecard results can be viewed on Scorecard.dev"
           echo ""
           echo "[OpenSSF Scorecard report for ${{github.repository}}]($url)"
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - if: github.event.inputs.debug == true
-        name: Upload results as artifacts to the workflow Summary page
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: SARIF file
-          path: scorecard-results.sarif
-          retention-days: 5
