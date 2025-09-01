@@ -33,7 +33,7 @@ run-name: Run OSV (open-source vulnerabilities) scanner
 
 on:
   schedule:
-    # Run on Sundays.
+    # Run weekly on Saturdays.
     - cron: '30 10 * * 6'
 
   pull_request:
@@ -65,17 +65,12 @@ concurrency:
 
 jobs:
   osv-scan:
-    if: github.repository_owner == 'quantumlib'
     name: Run OSV scanner
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
-      # Needed to read commit contents:
-      actions: read
       # Needed to upload the results to code-scanning dashboard:
       security-events: write
-      # Needed to upload SARIF file to CodeQL.
-      contents: read
     env:
       # Setting Bash SHELLOPTS here takes effect for all shell commands below.
       SHELLOPTS: ${{inputs.debug && 'xtrace' || '' }}

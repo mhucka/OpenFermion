@@ -98,9 +98,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Write the Scorecard dashboard link to the workflow summary
+      - name: Write the Scorecard report page link to the workflow summary
         run: |
-          repo="${{github.event.repository.name}}"
+          repo="${{github.repository}}"
           url="https://scorecard.dev/viewer/?uri=github.com%2F${repo//\//%2F}"
           {
           echo -n "The results are available on the OpenSSF Scorecard "
