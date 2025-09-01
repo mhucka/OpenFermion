@@ -20,7 +20,7 @@
 # results page, https://github.com/quantumlib/REPO/security/code-scanning/.
 
 name: Scorecard analysis
-run-name: Run Scorecard best-practices analyzer
+run-name: Run Scorecard scanner for security best practices
 
 on:
   schedule:
@@ -56,7 +56,8 @@ concurrency:
 
 jobs:
   run-scorecard:
-    name: Run Scorecard analyzer
+    if: github.repository_owner == 'quantumlib'
+    name: Scorecard analyzer
     runs-on: ubuntu-24.04
     permissions:
       security-events: write
