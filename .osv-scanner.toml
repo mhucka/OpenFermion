@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Summary: config for Open Source Vulnerabilitis Scanner.
+# Summary: config for Open Source Vulnerabilitis (OSV) Scanner.
 # See https://google.github.io/osv-scanner/configuration/ for more info.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # OSV prior to version 2.0 is unable to parse pip version specs correctly:
 # https://github.com/google/osv-scanner/issues/1483#issuecomment-2585999293
