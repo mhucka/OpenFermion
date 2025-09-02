@@ -12,7 +12,9 @@
 #   limitations under the License.
 from dataclasses import dataclass, asdict
 from typing import Tuple
+import os
 import h5py
+from openfermion.config import check_file_size
 import numpy as np
 import numpy.typing as npt
 
@@ -122,30 +124,34 @@ def cholesky_from_df_ints(mp2_inst, pad_mos_with_zeros=True) -> npt.NDArray:
     bra_end = nmo
     ket_start = nmo
     ket_end = 2 * nmo
-    with h5py.File(mp2_inst._scf.with_df._cderi, "r") as f:
-        kptij_lst = f["j3c-kptij"][:]
-        tao = []
-        ao_loc = None
-        for ki, kpti in enumerate(kpts):
-            for kj, kptj in enumerate(kpts):
-                kpti_kptj = np.array((kpti, kptj))
-                Lpq_ao = np.asarray(df._getitem(f, "j3c", kpti_kptj, kptij_lst))
+    check_file_size(mp2_inst._scf.with_df._cderi)
+    try:
+        with h5py.File(mp2_inst._scf.with_df._cderi, "r") as f:
+            kptij_lst = f["j3c-kptij"][:]
+            tao = []
+            ao_loc = None
+            for ki, kpti in enumerate(kpts):
+                for kj, kptj in enumerate(kpts):
+                    kpti_kptj = np.array((kpti, kptj))
+                    Lpq_ao = np.asarray(df._getitem(f, "j3c", kpti_kptj, kptij_lst))
 
-                mo = np.hstack((mo_coeff[ki], mo_coeff[kj]))
-                mo = np.asarray(mo, dtype=dtype, order="F")
-                if dtype == np.double:
-                    out = _ao2mo.nr_e2(
-                        Lpq_ao, mo, (bra_start, bra_end, ket_start, ket_end), aosym="s2"
-                    )
-                else:
-                    # Note: Lpq.shape[0] != naux if linear dependency is found
-                    # in auxbasis
-                    if Lpq_ao[0].size != nao**2:  # aosym = 's2'
-                        Lpq_ao = lib.unpack_tril(Lpq_ao).astype(np.complex128)
-                    out = _ao2mo.r_e2(
-                        Lpq_ao, mo, (bra_start, bra_end, ket_start, ket_end), tao, ao_loc
-                    )
-                Lchol[ki, kj] = out.reshape(-1, nmo, nmo)
+                    mo = np.hstack((mo_coeff[ki], mo_coeff[kj]))
+                    mo = np.asarray(mo, dtype=dtype, order="F")
+                    if dtype == np.double:
+                        out = _ao2mo.nr_e2(
+                            Lpq_ao, mo, (bra_start, bra_end, ket_start, ket_end), aosym="s2"
+                        )
+                    else:
+                        # Note: Lpq.shape[0] != naux if linear dependency is found
+                        # in auxbasis
+                        if Lpq_ao[0].size != nao**2:  # aosym = 's2'
+                            Lpq_ao = lib.unpack_tril(Lpq_ao).astype(np.complex128)
+                        out = _ao2mo.r_e2(
+                            Lpq_ao, mo, (bra_start, bra_end, ket_start, ket_end), tao, ao_loc
+                        )
+                    Lchol[ki, kj] = out.reshape(-1, nmo, nmo)
+    except Exception as e:
+        raise ValueError(f"Failed to load DF integrals from {mp2_inst._scf.with_df._cderi}: {e}")
 
     log.timer_debug1("transforming DF-AO integrals to MO", *cput0)
 

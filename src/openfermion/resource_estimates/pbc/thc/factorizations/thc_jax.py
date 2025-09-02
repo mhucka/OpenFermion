@@ -30,6 +30,7 @@ import time
 from typing import Tuple, Union
 
 import h5py
+from openfermion.config import check_file_size
 import numpy as np
 import numpy.typing as npt
 from pyscf.pbc import scf
@@ -59,19 +60,23 @@ def load_thc_factors(chkfile_name: str) -> KPointTHC:
     Returns:
         kthc: KPointISDF object built from chkfile_name.
     """
-    xi = None
-    with h5py.File(chkfile_name, "r") as fh5:
-        chi = fh5["chi"][:]
-        g_mapping = fh5["g_mapping"][:]
-        num_kpts = g_mapping.shape[0]
-        zeta = np.zeros((num_kpts,), dtype=object)
-        if "xi" in list(fh5.keys()):
-            xi = fh5["xi"][:]
-        else:
-            xi = None
-        for iq in range(g_mapping.shape[0]):
-            zeta[iq] = fh5[f"zeta_{iq}"][:]
-    return KPointTHC(xi=xi, zeta=zeta, g_mapping=g_mapping, chi=chi)
+    check_file_size(chkfile_name)
+    try:
+        xi = None
+        with h5py.File(chkfile_name, "r") as fh5:
+            chi = fh5["chi"][:]
+            g_mapping = fh5["g_mapping"][:]
+            num_kpts = g_mapping.shape[0]
+            zeta = np.zeros((num_kpts,), dtype=object)
+            if "xi" in list(fh5.keys()):
+                xi = fh5["xi"][:]
+            else:
+                xi = None
+            for iq in range(g_mapping.shape[0]):
+                zeta[iq] = fh5[f"zeta_{iq}"][:]
+        return KPointTHC(xi=xi, zeta=zeta, g_mapping=g_mapping, chi=chi)
+    except Exception as e:
+        raise ValueError(f"Failed to load THC factors from {chkfile_name}: {e}")
 
 
 def save_thc_factors(

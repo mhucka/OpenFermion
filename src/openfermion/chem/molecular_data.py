@@ -17,7 +17,7 @@ import shutil
 import numpy
 import h5py
 
-from openfermion.config import EQ_TOLERANCE, DATA_DIRECTORY
+from openfermion.config import EQ_TOLERANCE, DATA_DIRECTORY, check_file_size
 import openfermion.ops.representations as reps
 
 r"""NOTE ON PQRS CONVENTION:
@@ -849,15 +849,19 @@ class MolecularData(object):
     def load(self):
         geometry = []
 
-        with h5py.File("{}.hdf5".format(self.filename), "r") as f:
-            # Load geometry:
-            data = f["geometry/atoms"]
-            if data.shape != (()):
-                for atom, pos in zip(f["geometry/atoms"][...], f["geometry/positions"][...]):
-                    geometry.append((atom.tobytes().decode('utf-8'), list(pos)))
-                self.geometry = geometry
-            else:
-                self.geometry = data[...].tobytes().decode('utf-8')
+        file_path = "{}.hdf5".format(self.filename)
+        check_file_size(file_path)
+
+        try:
+            with h5py.File(file_path, "r") as f:
+                # Load geometry:
+                data = f.get("geometry/atoms")
+                if data is not None and data.shape != (()):
+                    for atom, pos in zip(f["geometry/atoms"][...], f["geometry/positions"][...]):
+                        geometry.append((atom.tobytes().decode('utf-8'), list(pos)))
+                    self.geometry = geometry
+                else:
+                    self.geometry = data[...].tobytes().decode('utf-8')
             # Load basis:
             self.basis = f["basis"][...].tobytes().decode('utf-8')
             # Load multiplicity:
@@ -914,6 +918,8 @@ class MolecularData(object):
                 # no coverage here because pathway is check on
                 # bad user generated file
                 self.general_calculations = None  # pragma: nocover
+        except Exception as e:
+            raise ValueError(f"Failed to load molecular data from {file_path}: {e}")
 
     def get_from_file(self, property_name):
         """Helper routine to re-open HDF5 file and pull out single property.

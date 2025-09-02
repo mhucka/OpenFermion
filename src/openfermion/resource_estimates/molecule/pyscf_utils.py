@@ -2,7 +2,9 @@
 """Drivers for various PySCF electronic structure routines"""
 from typing import Tuple, Optional
 import sys
+import os
 import h5py
+from openfermion.config import check_file_size
 import numpy as np
 from pyscf import gto, scf, ao2mo, mcscf, lo, tools, cc
 from pyscf.mcscf import avas
@@ -312,50 +314,53 @@ def load_casfile_to_pyscf(fname, num_alpha: Optional[int] = None, num_beta: Opti
         pyscf_mol: PySCF molecule object
         pyscf_mf:  PySCF mean field object
     """
-
-    with h5py.File(fname, "r") as f:
-        eri = np.asarray(f['eri'][()])
-        # h1 one body elements are sometimes called different things. Try a few.
-        try:
-            h1 = np.asarray(f['h0'][()])
-        except KeyError:
+    check_file_size(fname)
+    try:
+        with h5py.File(fname, "r") as f:
+            eri = np.asarray(f['eri'][()])
+            # h1 one body elements are sometimes called different things. Try a few.
             try:
-                h1 = np.asarray(f['hcore'][()])
+                h1 = np.asarray(f['h0'][()])
             except KeyError:
                 try:
-                    h1 = np.asarray(f['h1'][()])
+                    h1 = np.asarray(f['hcore'][()])
                 except KeyError:
-                    raise KeyError("Could not find 1-electron Hamiltonian")
-        # ecore sometimes exists, and sometimes as enuc (no frozen electrons)
-        try:
-            ecore = float(f['ecore'][()])
-        except KeyError:
+                    try:
+                        h1 = np.asarray(f['h1'][()])
+                    except KeyError:
+                        raise KeyError("Could not find 1-electron Hamiltonian")
+            # ecore sometimes exists, and sometimes as enuc (no frozen electrons)
             try:
-                ecore = float(f['enuc'][()])
+                ecore = float(f['ecore'][()])
             except KeyError:
-                ecore = 0.0
-        # read the number of spin up and spin down electrons if not input
-        if (num_alpha is None) or (num_beta is None):
-            try:
-                num_alpha = int(f['active_nalpha'][()])
-            except KeyError:
-                sys.exit(
-                    "In `load_casfile_to_pyscf()`: \n"
-                    + " No values found on file for num_alpha "
-                    + "(key: 'active_nalpha' in h5). "
-                    + " Try passing in a value for num_alpha, or"
-                    + " re-check integral file."
-                )
-            try:
-                num_beta = int(f['active_nbeta'][()])
-            except KeyError:
-                sys.exit(
-                    "In `load_casfile_to_pyscf()`: \n"
-                    + " No values found on file for num_beta "
-                    + "(key: 'active_nbeta' in h5). "
-                    + " Try passing in a value for num_beta, or"
-                    + " re-check integral file."
-                )
+                try:
+                    ecore = float(f['enuc'][()])
+                except KeyError:
+                    ecore = 0.0
+            # read the number of spin up and spin down electrons if not input
+            if (num_alpha is None) or (num_beta is None):
+                try:
+                    num_alpha = int(f['active_nalpha'][()])
+                except KeyError:
+                    sys.exit(
+                        "In `load_casfile_to_pyscf()`: \n"
+                        + " No values found on file for num_alpha "
+                        + "(key: 'active_nalpha' in h5). "
+                        + " Try passing in a value for num_alpha, or"
+                        + " re-check integral file."
+                    )
+                try:
+                    num_beta = int(f['active_nbeta'][()])
+                except KeyError:
+                    sys.exit(
+                        "In `load_casfile_to_pyscf()`: \n"
+                        + " No values found on file for num_beta "
+                        + "(key: 'active_nbeta' in h5). "
+                        + " Try passing in a value for num_beta, or"
+                        + " re-check integral file."
+                    )
+    except Exception as e:
+        raise ValueError(f"Failed to load CAS file from {fname}: {e}")
 
     pyscf_mol, pyscf_mf = cas_to_pyscf(h1, eri, ecore, num_alpha, num_beta)
 
