@@ -587,9 +587,9 @@ class SaveLoadOperatorTest(unittest.TestCase):
 
         self.assertEqual(fermion_operator, self.fermion_operator)
 
-    def test_load_bad_type(self):
-        with self.assertRaises(TypeError):
-            _ = load_operator('bad_type_operator')
+    def test_load_nonexistent_file_raises_error(self):
+        with self.assertRaises(FileNotFoundError):
+            load_operator('non_existent_file_for_testing')
 
     def test_save_bad_type(self):
         with self.assertRaises(TypeError):
@@ -634,6 +634,90 @@ class SaveLoadOperatorTest(unittest.TestCase):
         # The value is a list [real, imag]
         expected_terms = {"((1, 'X'), (2, 'Y'))": [1.0, 2.0]}
         self.assertEqual(data[1], expected_terms)
+
+
+class LoadOperatorTest(unittest.TestCase):
+    def setUp(self):
+        self.file_name = "test_load_operator_file.data"
+        self.file_path = os.path.join(DATA_DIRECTORY, self.file_name)
+
+    def tearDown(self):
+        if os.path.isfile(self.file_path):
+            os.remove(self.file_path)
+
+    def test_load_plain_text_invalid_format_raises_value_error(self):
+        with open(self.file_path, 'w') as f:
+            f.write("some text without the required separator")
+        with self.assertRaises(ValueError) as cm:
+            load_operator(self.file_name, plain_text=True)
+        self.assertIn("expected 'TYPE:\\nTERMS'", str(cm.exception))
+
+    def test_load_binary_too_large_raises_value_error(self):
+        with open(self.file_path, 'wb') as f:
+            f.write(b'data')
+
+        original_getsize = os.path.getsize
+
+        def mock_getsize(path):
+            from openfermion.utils.operator_utils import _MAX_BINARY_OPERATOR_DATA
+            if path == self.file_path:
+                return _MAX_BINARY_OPERATOR_DATA + 1
+            return original_getsize(path)
+
+        os.path.getsize = mock_getsize
+        try:
+            with self.assertRaises(ValueError) as cm:
+                load_operator(self.file_name, plain_text=False)
+            self.assertIn("exceeds maximum allowed", str(cm.exception))
+        finally:
+            os.path.getsize = original_getsize
+
+    def test_load_binary_corrupted_data_raises_value_error(self):
+        with open(self.file_path, 'wb') as f:
+            f.write(b"corrupted marshal data")
+        with self.assertRaises(ValueError) as cm:
+            load_operator(self.file_name, plain_text=False)
+        self.assertIn("Failed to load marshaled data", str(cm.exception))
+
+    def test_load_binary_invalid_structure_not_tuple_raises_type_error(self):
+        import marshal
+        with open(self.file_path, 'wb') as f:
+            marshal.dump("this is not a tuple", f)
+        with self.assertRaises(TypeError) as cm:
+            load_operator(self.file_name, plain_text=False)
+        self.assertIn("Expected a tuple", str(cm.exception))
+
+    def test_load_binary_invalid_structure_wrong_len_tuple_raises_type_error(self):
+        import marshal
+        with open(self.file_path, 'wb') as f:
+            marshal.dump(("one", "two", "three"), f)
+        with self.assertRaises(TypeError) as cm:
+            load_operator(self.file_name, plain_text=False)
+        self.assertIn("Expected a tuple of length 2", str(cm.exception))
+
+    def test_load_binary_invalid_operator_type_not_string_raises_type_error(self):
+        import marshal
+        with open(self.file_path, 'wb') as f:
+            marshal.dump((123, {}), f)
+        with self.assertRaises(TypeError) as cm:
+            load_operator(self.file_name, plain_text=False)
+        self.assertIn("Expected str but got type", str(cm.exception))
+
+    def test_load_binary_invalid_terms_type_not_dict_raises_type_error(self):
+        import marshal
+        with open(self.file_path, 'wb') as f:
+            marshal.dump(("FermionOperator", ["a", "list"]), f)
+        with self.assertRaises(TypeError) as cm:
+            load_operator(self.file_name, plain_text=False)
+        self.assertIn("Expected dict but got type", str(cm.exception))
+
+    def test_load_binary_unsupported_operator_type_raises_type_error(self):
+        import marshal
+        with open(self.file_path, 'wb') as f:
+            marshal.dump(("UnsupportedOperator", {}), f)
+        with self.assertRaises(TypeError) as cm:
+            load_operator(self.file_name, plain_text=False)
+        self.assertIn("is not supported", str(cm.exception))
 
 
 class GetFileDirTest(unittest.TestCase):
