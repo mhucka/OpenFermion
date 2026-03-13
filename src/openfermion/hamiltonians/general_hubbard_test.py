@@ -51,12 +51,12 @@ def fermi_hubbard_from_general(
     itertools.product(
         range(1, 4),
         range(1, 4),
-        (random.uniform(0, 2.0),),
-        (random.uniform(0, 2.0),),
-        (random.uniform(0, 2.0),),
+        (1.3,),
+        (0.8,),
+        (1.9,),
         (True, False),
         (True, False),
-        (random.uniform(-1, 1),),
+        (-0.5,),
     ),
 )
 def test_fermi_hubbard_square_special_general_equivalence(
@@ -165,19 +165,17 @@ lattices = [
 
 
 @pytest.mark.parametrize(
-    'lattice,parameters,distinguish_edges',
+    'lattice,distinguish_edges,seed',
     [
-        (
-            lattice,
-            random_parameters(lattice, distinguish_edges=distinguish_edges),
-            distinguish_edges,
-        )
+        (lattice, distinguish_edges, seed)
         for lattice in lattices
-        for _ in range(2)
+        for seed in (123, 456)
         for distinguish_edges in (True, False)
     ],
 )
-def test_fermi_hubbard_square_lattice_random_parameters(lattice, parameters, distinguish_edges):
+def test_fermi_hubbard_square_lattice_random_parameters(lattice, distinguish_edges, seed):
+    random.seed(seed)
+    parameters = random_parameters(lattice, distinguish_edges=distinguish_edges)
     model = FermiHubbardModel(lattice, **parameters)
     hamiltonian = model.hamiltonian()
     terms_per_parameter = defaultdict(int)

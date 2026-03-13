@@ -21,8 +21,3 @@ def pytest_configure(config):
     os.environ['CIRQ_TESTING'] = "true"
 
 
-@pytest.fixture(autouse=True)
-def set_random_seed():
-    """Set a fixed random seed when testing."""
-    random.seed(0)
-    np.random.seed(0)
