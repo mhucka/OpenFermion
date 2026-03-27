@@ -53,7 +53,7 @@ def test_state_swap_eigen_component(index_pair, n_qubits):
         assert np.allclose(actual_component, expected_component)
 
 
-@pytest.mark.parametrize('n_modes, seed', [(7, np.random.randint(1 << 30)) for _ in range(2)])
+@pytest.mark.parametrize('n_modes, seed', [(7, 84392), (7, 129302)])
 def test_interaction_operator_interconversion(n_modes, seed):
     operator = openfermion.random_interaction_operator(n_modes, real=False, seed=seed)
     gates = openfermion.fermionic_simulation_gates_from_interaction_operator(operator)
@@ -222,7 +222,7 @@ def test_fermionic_simulation_gate(gate):
     assert gate.num_weights() == super(type(gate), gate).num_weights()
 
 
-@pytest.mark.parametrize('weights', list(np.random.rand(10, 3)) + [(1, 0, 1)])
+@pytest.mark.parametrize('weights', [(0.1, 0.5, 0.9), (0.2, 0.4, 0.8), (0.7, 0.3, 0.1), (0.1, 0.1, 0.1), (0.5, 0.5, 0.5), (0.8, 0.2, 0.9), (0.3, 0.6, 0.4), (0.9, 0.8, 0.7), (0.4, 0.7, 0.2), (0.6, 0.9, 0.3)] + [(1, 0, 1)])
 def test_weights_and_exponent(weights):
     exponents = np.linspace(-1, 1, 8)
     gates = tuple(
@@ -263,8 +263,8 @@ def test_zero_weights():
     'weights,exponent',
     [
         (
-            (np.random.uniform(-5, 5) + 1j * np.random.uniform(-5, 5), np.random.uniform(-5, 5)),
-            np.random.uniform(-5, 5),
+            (1.2 + 3.4j, 2.1),
+            -1.5,
         )
         for _ in range(5)
     ],
@@ -342,8 +342,11 @@ def test_cubic_fermionic_simulation_gate_consistency_special(exponent, control):
 @pytest.mark.parametrize(
     'weights,exponent',
     [
-        (np.random.uniform(-5, 5, 3) + 1j * np.random.uniform(-5, 5, 3), np.random.uniform(-5, 5))
-        for _ in range(5)
+        (np.array([-2.1+1.3j, 0.4-3.5j, 4.2+2.8j]), -1.2),
+        (np.array([3.1-0.9j, -4.5+1.1j, 2.0-2.0j]), 3.4),
+        (np.array([-0.5+4.9j, 1.2+0.1j, -3.3-4.4j]), 0.8),
+        (np.array([4.8-2.2j, -1.1-1.1j, 0.5+3.7j]), -4.1),
+        (np.array([-3.9+0.8j, 2.7-2.6j, -0.2+4.5j]), 2.3),
     ],
 )
 def test_cubic_fermionic_simulation_gate_consistency_docstring(weights, exponent):
@@ -598,7 +601,7 @@ test_weights = [1.0, 0.5, 0.25, 0.1, 0.0, -0.5]
 
 
 @pytest.mark.parametrize(
-    'weights', itertools.chain(itertools.product(test_weights, repeat=3), np.random.rand(10, 3))
+    'weights', itertools.chain(itertools.product(test_weights, repeat=3), [(0.1, 0.5, 0.9), (0.2, 0.4, 0.8), (0.7, 0.3, 0.1), (0.1, 0.1, 0.1), (0.5, 0.5, 0.5), (0.8, 0.2, 0.9), (0.3, 0.6, 0.4), (0.9, 0.8, 0.7), (0.4, 0.7, 0.2), (0.6, 0.9, 0.3)])
 )
 def test_quartic_fermionic_simulation_decompose(weights):
     cirq.testing.assert_decompose_is_consistent_with_unitary(
@@ -609,8 +612,11 @@ def test_quartic_fermionic_simulation_decompose(weights):
 @pytest.mark.parametrize(
     'weights,exponent',
     [
-        (np.random.uniform(-5, 5, 3) + 1j * np.random.uniform(-5, 5, 3), np.random.uniform(-5, 5))
-        for _ in range(5)
+        (np.array([-2.1+1.3j, 0.4-3.5j, 4.2+2.8j]), -1.2),
+        (np.array([3.1-0.9j, -4.5+1.1j, 2.0-2.0j]), 3.4),
+        (np.array([-0.5+4.9j, 1.2+0.1j, -3.3-4.4j]), 0.8),
+        (np.array([4.8-2.2j, -1.1-1.1j, 0.5+3.7j]), -4.1),
+        (np.array([-3.9+0.8j, 2.7-2.6j, -0.2+4.5j]), 2.3),
     ],
 )
 def test_quartic_fermionic_simulation_unitary(weights, exponent):
@@ -679,8 +685,11 @@ def test_quartic_fermionic_simulation_gate_text_diagram():
 @pytest.mark.parametrize(
     'weights,exponent',
     [
-        (np.random.uniform(-5, 5, 3) + 1j * np.random.uniform(-5, 5, 3), np.random.uniform(-5, 5))
-        for _ in range(5)
+        (np.array([-2.1+1.3j, 0.4-3.5j, 4.2+2.8j]), -1.2),
+        (np.array([3.1-0.9j, -4.5+1.1j, 2.0-2.0j]), 3.4),
+        (np.array([-0.5+4.9j, 1.2+0.1j, -3.3-4.4j]), 0.8),
+        (np.array([4.8-2.2j, -1.1-1.1j, 0.5+3.7j]), -4.1),
+        (np.array([-3.9+0.8j, 2.7-2.6j, -0.2+4.5j]), 2.3),
     ],
 )
 def test_quartic_fermionic_simulation_apply_unitary(weights, exponent):
