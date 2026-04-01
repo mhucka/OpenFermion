@@ -51,7 +51,7 @@ class ExamplesTest(unittest.TestCase):
                     try:
                         exec(strip_magics_and_shows(cell.source), state)
                     # coverage: ignore
-                    except:
+                    except Exception:
                         print('Failed to run {}.'.format(path))
                         raise
 
