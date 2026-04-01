@@ -356,5 +356,5 @@ Rz 0.6 4
 CNOT 3 4'''
         try:
             self.assertEqual(qasmstr, strcorrect1)
-        except:
+        except AssertionError:
             self.assertEqual(qasmstr, strcorrect2)
