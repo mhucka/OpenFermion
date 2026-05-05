@@ -26,8 +26,8 @@ def test_spin():
 @pytest.mark.parametrize(
     "x_dimension,y_dimension,n_dofs,spinless,periodic",
     itertools.product(
-        random.sample(range(3, 10), 3),
-        random.sample(range(3, 10), 3),
+        [3, 6, 9],
+        [4, 5, 8],
         range(1, 4),
         (False, True),
         (False, True),
@@ -123,7 +123,7 @@ def test_hubbard_square_lattice_edge_types():
         lattice.site_pairs_iter('banana')
 
 
-@pytest.mark.parametrize('d', random.sample(range(3, 10), 3))
+@pytest.mark.parametrize('d', [3, 6, 8])
 def test_hubbard_square_lattice_1xd(d):
     for shape, periodic in itertools.product(((1, d), (d, 1)), (True, False)):
         lattice = HubbardSquareLattice(*shape, periodic=periodic)
@@ -145,7 +145,7 @@ def test_hubbard_square_lattice_1xd(d):
         )
 
 
-@pytest.mark.parametrize('x,y', (random.sample(range(3, 10), 2) for _ in range(3)))
+@pytest.mark.parametrize('x,y', [(4, 7), (5, 9), (8, 3)])
 def test_hubbard_square_lattice_neighbors(x, y):
     for periodic in (True, False):
         lattice = HubbardSquareLattice(x, y, periodic=periodic)
@@ -157,7 +157,7 @@ def test_hubbard_square_lattice_neighbors(x, y):
         assert len(tuple(lattice.diagonal_neighbors_iter())) == n_diagonal_neighbors
 
 
-@pytest.mark.parametrize('d', random.sample(range(3, 10), 3))
+@pytest.mark.parametrize('d', [4, 7, 9])
 def test_hubbard_square_lattice_2xd(d):
     for shape, periodic in itertools.product(((2, d), (d, 2)), (True, False)):
         lattice = HubbardSquareLattice(*shape, periodic=periodic)
@@ -190,13 +190,26 @@ def test_hubbard_square_lattice_2x2():
     'kwargs',
     [
         {
-            'x_dimension': random.randrange(1, 10),
-            'y_dimension': random.randrange(1, 10),
-            'n_dofs': random.randrange(1, 10),
-            'spinless': random.choice((True, False)),
-            'periodic': random.choice((True, False)),
-        }
-        for _ in range(5)
+            'x_dimension': 4,
+            'y_dimension': 7,
+            'n_dofs': 2,
+            'spinless': False,
+            'periodic': True,
+        },
+        {
+            'x_dimension': 3,
+            'y_dimension': 3,
+            'n_dofs': 1,
+            'spinless': True,
+            'periodic': False,
+        },
+        {
+            'x_dimension': 5,
+            'y_dimension': 2,
+            'n_dofs': 3,
+            'spinless': True,
+            'periodic': True,
+        },
     ],
 )
 def test_hubbard_square_lattice_repr(kwargs):
