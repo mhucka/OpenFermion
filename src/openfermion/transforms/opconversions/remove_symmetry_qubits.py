@@ -16,7 +16,7 @@ arXiv:1701.08213 and Phys. Rev. X 6, 031007.
 
 import copy
 
-from openfermion.ops.operators import FermionOperator
+from openfermion.ops.operators import FermionOperator, QubitOperator
 from openfermion.transforms.opconversions.bravyi_kitaev_tree import bravyi_kitaev_tree
 from openfermion.transforms.opconversions.term_reordering import reorder
 from openfermion.utils.indexing import up_then_down
@@ -95,11 +95,21 @@ def symmetry_conserving_bravyi_kitaev(fermion_hamiltonian, active_orbitals, acti
         qubit_hamiltonian, active_orbitals, parity_final_orb
     )
     qubit_hamiltonian = edit_hamiltonian_for_spin(
-        qubit_hamiltonian, active_orbitals / 2, parity_middle_orb
+        qubit_hamiltonian, active_orbitals // 2, parity_middle_orb
     )
-    qubit_hamiltonian = remove_indices(qubit_hamiltonian, (active_orbitals / 2, active_orbitals))
+    qubit_hamiltonian = remove_indices(qubit_hamiltonian, (active_orbitals // 2, active_orbitals))
 
-    return qubit_hamiltonian
+    # remove_indices() shifts qubit indices and can map two qubits onto the
+    # same index, producing terms with multiple Paulis acting on one qubit
+    # (e.g. ((0, 'X'), (1, 'Y'), (1, 'X'))). Rebuilding the operator routes
+    # each term back through QubitOperator's simplification, restoring the
+    # canonical one-Pauli-per-qubit form that consumers such as
+    # get_sparse_operator require. See issue #880.
+    simplified_hamiltonian = QubitOperator()
+    for term, coefficient in qubit_hamiltonian.terms.items():
+        simplified_hamiltonian += QubitOperator(term, coefficient)
+
+    return simplified_hamiltonian
 
 
 def edit_hamiltonian_for_spin(qubit_hamiltonian, spin_orbital, orbital_parity):
